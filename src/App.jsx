@@ -7,7 +7,8 @@ import {
 import {
   LayoutDashboard, List, Lightbulb, Shield, Eye,
   Plus, Pencil, Trash2, Search, X, TrendingUp, TrendingDown,
-  Wallet, ArrowUpRight, ArrowDownRight, Menu, Sun, Moon
+  Wallet, ArrowUpRight, ArrowDownRight, Menu, Sun, Moon,
+  Download, CheckCircle
 } from "lucide-react";
 import BorderGlow from "./components/borderglow";
 
@@ -221,10 +222,70 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
+// ─── SKELETON LOADERS ──────────────────────────────────────────────────────────
+function CardSkeleton() {
+  const { T } = useTheme();
+  return (
+    <div style={{ padding:24, background:T.surface, borderRadius:24, border:`1px solid ${T.border}`, height:"100%" }}>
+      <div className="skeleton" style={{ width:80, height:14, marginBottom:16 }}/>
+      <div className="skeleton" style={{ width:140, height:28, marginBottom:16 }}/>
+      <div className="skeleton" style={{ width:100, height:12 }}/>
+    </div>
+  );
+}
+
+function ChartSkeleton() {
+  const { T } = useTheme();
+  return (
+    <div style={{ padding:24, background:T.surface, borderRadius:24, border:`1px solid ${T.border}`, height:"100%", minHeight:300 }}>
+      <div className="skeleton" style={{ width:140, height:18, marginBottom:8 }}/>
+      <div className="skeleton" style={{ width:200, height:14, marginBottom:32 }}/>
+      <div style={{ display:"flex", alignItems:"flex-end", gap:12, height:180, padding:"0 10px" }}>
+        {[60, 40, 80, 50, 90, 70].map((h, i) => (
+          <div key={i} className="skeleton" style={{ flex:1, height:`${h}%`, opacity:0.6 }}/>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TableSkeleton() {
+  const { T } = useTheme();
+  return (
+    <div style={{ padding:24, background:T.surface, borderRadius:24, border:`1px solid ${T.border}` }}>
+      <div style={{ display:"flex", gap:12, marginBottom:24 }}>
+        {[1, 2, 3].map(i => <div key={i} className="skeleton" style={{ width:120, height:36, borderRadius:12 }}/>)}
+      </div>
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} style={{ display:"flex", gap:20, padding:"16px 0", borderBottom:i<5?`1px solid ${T.border}`:"none" }}>
+          <div className="skeleton" style={{ width:80, height:14 }}/>
+          <div className="skeleton" style={{ flex:1, height:14 }}/>
+          <div className="skeleton" style={{ width:100, height:14 }}/>
+          <div className="skeleton" style={{ width:60, height:14 }}/>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
-function DashboardView({ stats, monthlyData, catData }) {
+function DashboardView({ stats, monthlyData, catData, isLoading }) {
   const { T } = useTheme();
   const S = makeStyles(T);
+
+  if (isLoading) {
+    return (
+      <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit">
+        <div className="summary-grid" style={{ marginBottom:28 }}>
+          {[1,2,3,4].map(i => <CardSkeleton key={i}/>)}
+        </div>
+        <div className="charts-grid">
+          <ChartSkeleton/>
+          <ChartSkeleton/>
+        </div>
+      </motion.div>
+    );
+  }
   const summaryCards = [
     { label:"Total Balance",  value:$(stats.balance),  icon:<Wallet size={20}/>,        color:T.gold,   sub:"Net liquid assets", glow:"gold" },
     { label:"Total Income",   value:$(stats.income),   icon:<ArrowUpRight size={20}/>,  color:T.blue,   sub:`${pct(stats.savingsRate)} savings rate`, glow:"blue" },
@@ -319,10 +380,18 @@ function DashboardView({ stats, monthlyData, catData }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-function TransactionsView({ txs, allTxs, search, setSearch, filterCat, setFilterCat, filterType, setFilterType, sortField, sortDir, handleSort, role, onEdit, onDelete, onAdd }) {
+function TransactionsView({ txs, allTxs, search, setSearch, filterCat, setFilterCat, filterType, setFilterType, sortField, sortDir, handleSort, role, onEdit, onDelete, onAdd, isLoading }) {
   const { T } = useTheme();
   const S = makeStyles(T);
   const allCats = useMemo(() => [...new Set(allTxs.map(t=>t.category))].sort(), [allTxs]);
+
+  if (isLoading) {
+    return (
+      <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit">
+        <TableSkeleton/>
+      </motion.div>
+    );
+  }
   const SortArrow = ({ f }) => sortField===f
     ? <span style={{ color:T.blue, fontSize:10 }}>{sortDir==="asc"?"▲":"▼"}</span>
     : <span style={{ color:T.dim, fontSize:10 }}>⇅</span>;
@@ -336,19 +405,7 @@ function TransactionsView({ txs, allTxs, search, setSearch, filterCat, setFilter
           {search && <button onClick={()=>setSearch("")} style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:T.text, cursor:"pointer" }}><X size={15}/></button>}
         </div>
 
-        <div className="filter-selects">
-          <select value={filterCat} onChange={e=>setFilterCat(e.target.value)} style={{ ...S.input, width:"auto", cursor:"pointer", background:T.inputBgSelect, minWidth:130 }}>
-            <option value="all">All Categories</option>
-            {allCats.map(c=><option key={c} value={c}>{c}</option>)}
-          </select>
-          <select value={filterType} onChange={e=>setFilterType(e.target.value)} style={{ ...S.input, width:"auto", cursor:"pointer", background:T.inputBgSelect, minWidth:110 }}>
-            <option value="all">All Types</option>
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
-          </select>
-        </div>
-
-        {role==="admin" && (
+          {role==="admin" && (
           <motion.button whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }} style={S.btn} onClick={onAdd}>
             <Plus size={15}/> <span className="btn-text">New Transaction</span>
           </motion.button>
@@ -411,28 +468,72 @@ function TransactionsView({ txs, allTxs, search, setSearch, filterCat, setFilter
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-function InsightsView({ monthlyData, catData }) {
+function InsightsView({ monthlyData, catData, isLoading }) {
   const { T } = useTheme();
   const S = makeStyles(T);
-  const last    = monthlyData[monthlyData.length-1];
-  const prev    = monthlyData[monthlyData.length-2];
-  const expChg  = prev.expense>0 ? ((last.expense-prev.expense)/prev.expense*100) : 0;
-  const totalExp = catData.reduce((s,c)=>s+c.value,0);
 
-  const insightCards = [
-    { label:"Highest Expense", color:CAT_COLORS[catData[0]?.name]||T.gold, value:catData[0]?.name||"None", sub:$(catData[0]?.value||0)+" spent", icon:<TrendingDown size={20}/>, detail:"Accounts for "+pct(catData[0]?.value/totalExp*100)+" of expenses" },
-    { label:"Burn Rate Change", color:expChg<0?T.blue:T.gold, value:(expChg<0?"Decreased ":"Increased ")+Math.abs(expChg).toFixed(1)+"%", sub:"Compared to last month", icon:expChg<0?<TrendingDown size={20}/>:<TrendingUp size={20}/>, detail:expChg<0?"Lower monthly spend":"Higher capital outflow" },
-    { label:"Net Retention", color:T.blue, value:pct(last.income>0?(last.income-last.expense)/last.income*100:0), sub:"Current period", icon:<Shield size={20}/>, detail:`${$(last.income-last.expense)} net addition` },
+  if (isLoading) {
+    return (
+      <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit">
+        <div className="summary-grid" style={{ marginBottom:24 }}>
+          {[1,2,3,4].map(i => <CardSkeleton key={i}/>)}
+        </div>
+        <ChartSkeleton/>
+      </motion.div>
+    );
+  }
+  const last     = monthlyData[monthlyData.length-1];
+  const prev     = monthlyData[monthlyData.length-2];
+  const expChg   = prev.expense > 0 ? ((last.expense - prev.expense) / prev.expense * 100) : 0;
+  const totalExp = catData.reduce((s, c) => s + c.value, 0);
+  const isOverspending = last.expense > last.income;
+  const savings = last.income > 0 ? ((last.income - last.expense) / last.income * 100) : 0;
 
-    { label:"Fixed Overheads", color:CAT_COLORS["Housing"], value:"Housing", sub:$(10800)+" annual", icon:<Shield size={20}/>, detail:"Predictable recurring costs" }
+  const smartInsights = [
+    { 
+      label: "Monthly Trend", 
+      color: expChg <= 0 ? T.blue : T.gold, 
+      value: expChg <= 0 ? `📉 -${Math.abs(expChg).toFixed(1)}%` : `📈 +${expChg.toFixed(1)}%`, 
+      sub: expChg <= 0 ? "Spending decreased" : "Spending increased", 
+      icon: expChg <= 0 ? <TrendingDown size={20}/> : <TrendingUp size={20}/>, 
+      detail: `Compared to ${prev.month}`,
+      glow: expChg <= 0 ? "blue" : "gold"
+    },
+    { 
+      label: "Highest Expense", 
+      color: CAT_COLORS[catData[0]?.name] || T.gold, 
+      value: catData[0]?.name || "N/A", 
+      sub: $(catData[0]?.value || 0), 
+      icon: <Wallet size={20}/>, 
+      detail: `💸 ${pct(catData[0]?.value / totalExp * 100)} of total burn`,
+      glow: "gold"
+    },
+    { 
+      label: "Budget Status", 
+      color: isOverspending ? T.gold : T.blue, 
+      value: isOverspending ? "⚠️ Warning" : "✅ Healthy", 
+      sub: isOverspending ? "Overspending detected" : "Under budget", 
+      icon: isOverspending ? <Shield size={20}/> : <Shield size={20}/>, 
+      detail: isOverspending ? "Expenses > Income this month" : `Saving ${savings.toFixed(1)}% of income`,
+      glow: isOverspending ? "gold" : "blue"
+    },
+    { 
+      label: "Cash Stability", 
+      color: T.blue, 
+      value: $(last.income - last.expense), 
+      sub: "Net Cash Flow", 
+      icon: <TrendingUp size={20}/>, 
+      detail: `Period ending ${last.month}`,
+      glow: "blue"
+    }
   ];
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit">
       <div className="summary-grid" style={{ marginBottom:24 }}>
-        {insightCards.map((c)=>(
+        {smartInsights.map((c)=>(
           <motion.div key={c.label} variants={itemAnim} whileHover={{ y:-3, scale:1.008 }} transition={{ duration:0.2 }}>
-            <BorderGlow glowColor={c.color===T.blue?"210 100 60":"46 65 52"} colors={[T.blue, T.gold]} backgroundColor={T.glowBg} glowIntensity={T.glowIntensity}>
+            <BorderGlow glowColor={c.glow === "blue" ? "210 100 60" : "46 65 52"} colors={[T.blue, T.gold]} backgroundColor={T.glowBg} glowIntensity={T.glowIntensity}>
               <div style={{ ...S.card, ...S.cardGradient, height:"100%", boxSizing:"border-box", border:"none" }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:16 }}>
                   <span style={{ fontSize:13, color:T.text, fontWeight:500 }}>{c.label}</span>
@@ -578,27 +679,123 @@ export default function App() {
   }, []);
 
   // ── App state ──
+  // ── 1. App state ──
   const [view, setView]       = useState("dashboard");
   const [role, setRole]       = useState("admin");
   const [txs, setTxs]         = useState(SEED);
   const [search, setSearch]   = useState("");
   const [filterCat, setFilterCat]   = useState("all");
   const [filterType, setFilterType] = useState("all");
+  const [timeRange, setTimeRange]   = useState("all");
   const [sortField, setSortField]   = useState("date");
   const [sortDir, setSortDir]       = useState("desc");
   const [modal, setModal]     = useState(null);
   const [syncActive, setSyncActive] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [exportMsg, setExportMsg]     = useState("");
+  const [isLoading, setIsLoading]     = useState(true);
+
+  // Simulate initial data loading
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ── 2. Helpers & Base Data ──
+  const allCats = useMemo(() => Array.from(new Set(SEED.map(t => t.category))).sort(), []);
+
+  const isWithinRange = useCallback((dateStr, range) => {
+    if (range === "all") return true;
+    const date = new Date(dateStr);
+    const lastSeedDate = new Date("2025-06-03"); 
+    const diffTime = Math.abs(lastSeedDate - date);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (range === "7d")   return diffDays <= 7;
+    if (range === "30d")  return diffDays <= 30;
+    if (range === "year") return diffDays <= 365;
+    return true;
+  }, []);
+
+  const baseFilteredTxs = useMemo(() => {
+    return txs.filter(t => {
+      const matchCat   = filterCat === "all" || t.category === filterCat;
+      const matchType  = filterType === "all" || t.type === filterType;
+      const matchRange = isWithinRange(t.date, timeRange);
+      return matchCat && matchType && matchRange;
+    });
+  }, [txs, filterCat, filterType, timeRange, isWithinRange]);
+
+  // ── 3. Derived Computed Values ──
+  const stats = useMemo(()=>{
+    const income  = baseFilteredTxs.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
+    const expense = baseFilteredTxs.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
+    return { income, expense, balance:income-expense, savingsRate:income>0?(income-expense)/income*100:0 };
+  },[baseFilteredTxs]);
+
+  const monthlyData = useMemo(()=>{
+    const map={}; MONTHS.forEach(m=>{map[m]={month:m,income:0,expense:0,balance:0};});
+    baseFilteredTxs.forEach(t=>{ const m=MM_MAP[t.date.slice(5,7)]; if(!m)return; if(t.type==="income") map[m].income+=t.amount; else map[m].expense+=t.amount; });
+    let run=0; return MONTHS.map(m=>{ run+=map[m].income-map[m].expense; return{...map[m],balance:run}; });
+  },[baseFilteredTxs]);
+
+  const catData = useMemo(()=>{
+    const map={}; baseFilteredTxs.filter(t=>t.type==="expense").forEach(t=>{map[t.category]=(map[t.category]||0)+t.amount;});
+    return Object.entries(map).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+  },[baseFilteredTxs]);
+
+  const filteredTxsForList = useMemo(()=>{
+    let list = baseFilteredTxs.filter(t => {
+      if (!search) return true;
+      return t.description.toLowerCase().includes(search.toLowerCase()) || t.category.toLowerCase().includes(search.toLowerCase());
+    });
+    list.sort((a,b)=>{ const av=sortField==="amount"?a.amount:a[sortField]; const bv=sortField==="amount"?b.amount:b[sortField]; return sortDir==="asc"?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0); });
+    return list;
+  },[baseFilteredTxs, search, sortField, sortDir]);
+
+  // ── 4. Handlers & Actions ──
+  const exportData = useCallback((format) => {
+    const data = baseFilteredTxs;
+    let blob;
+    let filename = `fundly_export_${new Date().toISOString().slice(0,10)}`;
+
+    if (format === 'json') {
+      const json = JSON.stringify(data, null, 2);
+      blob = new Blob([json], { type: 'application/json' });
+      filename += '.json';
+    } else {
+      const headers = ['Date', 'Description', 'Category', 'Type', 'Amount'];
+      const rows = data.map(t => [t.date, t.description, t.category, t.type, t.amount]);
+      const csvContent = [headers, ...rows].map(r => `"${r.join('","')}"`).join('\n');
+      blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      filename += '.csv';
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setExportMsg(`Exported ${format.toUpperCase()}`);
+    setTimeout(() => setExportMsg(""), 3000);
+  }, [baseFilteredTxs]);
 
   const handleNavClick = useCallback((id) => { setView(id); setSidebarOpen(false); }, []);
   const handleOverlayClick = useCallback(() => setSidebarOpen(false), []);
+  const handleSort   = (f) => { if(sortField===f) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortField(f); setSortDir("desc"); } };
+  const handleDelete = (id) => setTxs(p=>p.filter(t=>t.id!==id));
+  const handleSave   = (tx) => { if(tx.id) setTxs(p=>p.map(t=>t.id===tx.id?tx:t)); else setTxs(p=>[{...tx,id:++_nextId},...p]); setModal(null); };
+  const openAdd      = () => setModal({ mode:"add", tx:{ description:"", amount:"", type:"expense", category:"Housing", date:new Date().toISOString().slice(0,10) }});
 
+  // ── 5. Effects ──
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [sidebarOpen]);
 
-  // Sync theme to body class for global CSS overrides (scrollbar, etc)
   useEffect(() => {
     if (isDark) {
       document.body.classList.remove("theme-light");
@@ -609,37 +806,7 @@ export default function App() {
     }
   }, [isDark]);
 
-  const stats = useMemo(()=>{
-    const income  = txs.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0);
-    const expense = txs.filter(t=>t.type==="expense").reduce((s,t)=>s+t.amount,0);
-    return { income, expense, balance:income-expense, savingsRate:income>0?(income-expense)/income*100:0 };
-  },[txs]);
-
-  const monthlyData = useMemo(()=>{
-    const map={}; MONTHS.forEach(m=>{map[m]={month:m,income:0,expense:0,balance:0};});
-    txs.forEach(t=>{ const m=MM_MAP[t.date.slice(5,7)]; if(!m)return; if(t.type==="income") map[m].income+=t.amount; else map[m].expense+=t.amount; });
-    let run=0; return MONTHS.map(m=>{ run+=map[m].income-map[m].expense; return{...map[m],balance:run}; });
-  },[txs]);
-
-  const catData = useMemo(()=>{
-    const map={}; txs.filter(t=>t.type==="expense").forEach(t=>{map[t.category]=(map[t.category]||0)+t.amount;});
-    return Object.entries(map).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
-  },[txs]);
-
-  const filteredTxs = useMemo(()=>{
-    let list=[...txs];
-    if(search) list=list.filter(t=>t.description.toLowerCase().includes(search.toLowerCase())||t.category.toLowerCase().includes(search.toLowerCase()));
-    if(filterCat!=="all") list=list.filter(t=>t.category===filterCat);
-    if(filterType!=="all") list=list.filter(t=>t.type===filterType);
-    list.sort((a,b)=>{ const av=sortField==="amount"?a.amount:a[sortField]; const bv=sortField==="amount"?b.amount:b[sortField]; return sortDir==="asc"?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0); });
-    return list;
-  },[txs,search,filterCat,filterType,sortField,sortDir]);
-
-  const handleSort   = (f) => { if(sortField===f) setSortDir(d=>d==="asc"?"desc":"asc"); else { setSortField(f); setSortDir("desc"); } };
-  const handleDelete = (id) => setTxs(p=>p.filter(t=>t.id!==id));
-  const handleSave   = (tx) => { if(tx.id) setTxs(p=>p.map(t=>t.id===tx.id?tx:t)); else setTxs(p=>[{...tx,id:++_nextId},...p]); setModal(null); };
-  const openAdd      = () => setModal({ mode:"add", tx:{ description:"", amount:"", type:"expense", category:"Housing", date:new Date().toISOString().slice(0,10) }});
-
+  // ── 6. Navigation items ──
   const navItems = [
     { id:"dashboard",    label:"Overview",     icon:<LayoutDashboard size={18}/> },
     { id:"transactions", label:"Transactions", icon:<List size={18}/> },
@@ -701,6 +868,19 @@ export default function App() {
           )}
         </AnimatePresence>
 
+        {/* ── Export feedback toast ── */}
+        <AnimatePresence>
+          {exportMsg && (
+            <motion.div initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} exit={{ opacity:0, x:20 }} transition={{ duration:0.3 }}
+              style={{ position:"fixed", bottom:32, right:32, zIndex:1000, background:T.blue, border:`1px solid ${T.border}`, borderRadius:12, padding:"12px 24px", color:"#fff", fontWeight:600, fontSize:13, boxShadow:`0 10px 40px rgba(0,0,0,0.3)` }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <CheckCircle size={16}/>
+                {exportMsg} successfully
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* ── Mobile overlay ── */}
         <AnimatePresence>
           {sidebarOpen && (
@@ -749,10 +929,59 @@ export default function App() {
           </motion.header>
 
           <div style={S.scroll} className="main-scroll">
+            {/* Global Interactive Filters */}
+            <motion.div initial={{ opacity:0, y: -10 }} animate={{ opacity:1, y: 0 }} 
+              style={{ display:"flex", flexWrap:"wrap", gap:12, marginBottom:24, paddingBottom:8, borderBottom:`1px solid ${T.border}` }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ fontSize:12, fontWeight:600, color:T.text, textTransform:"uppercase", letterSpacing:1 }}>Range</span>
+                <select value={timeRange} onChange={e=>setTimeRange(e.target.value)} style={{ ...S.input, width:"auto", minWidth:120, background:T.inputBgSelect }}>
+                  <option value="all">All Records</option>
+                  <option value="7d">Last 7 Days</option>
+                  <option value="30d">Last 30 Days</option>
+                  <option value="year">Full Year</option>
+                </select>
+              </div>
+
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ fontSize:12, fontWeight:600, color:T.text, textTransform:"uppercase", letterSpacing:1 }}>Category</span>
+                <select value={filterCat} onChange={e=>setFilterCat(e.target.value)} style={{ ...S.input, width:"auto", minWidth:130, background:T.inputBgSelect }}>
+                  <option value="all">Global (All)</option>
+                  {allCats.map(c=><option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ fontSize:12, fontWeight:600, color:T.text, textTransform:"uppercase", letterSpacing:1 }}>Type</span>
+                <select value={filterType} onChange={e=>setFilterType(e.target.value)} style={{ ...S.input, width:"auto", minWidth:110, background:T.inputBgSelect }}>
+                  <option value="all">In & Out</option>
+                  <option value="income">Credits only</option>
+                  <option value="expense">Debits only</option>
+                </select>
+              </div>
+
+              {(filterCat!=="all" || filterType!=="all" || timeRange!=="all") && (
+                <motion.button initial={{ opacity:0 }} animate={{ opacity:1 }} onClick={()=>{ setFilterCat("all"); setFilterType("all"); setTimeRange("all"); }}
+                  style={{ background:"none", border:"none", color:T.blue, cursor:"pointer", fontSize:12, fontWeight:600, textDecoration:"underline" }}>
+                  Clear Filters
+                </motion.button>
+              )}
+
+              <div style={{ marginLeft:"auto", display:"flex", gap:10 }}>
+                <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.98 }} onClick={()=>exportData('csv')}
+                  style={{ ...S.btn, background:"transparent", border:`1px solid ${T.border}`, padding:"6px 14px", fontSize:12, color:T.textH }}>
+                  <Download size={13} style={{ marginRight:6 }}/> CSV
+                </motion.button>
+                <motion.button whileHover={{ scale:1.02 }} whileTap={{ scale:0.98 }} onClick={()=>exportData('json')}
+                  style={{ ...S.btn, background:"transparent", border:`1px solid ${T.border}`, padding:"6px 14px", fontSize:12, color:T.textH }}>
+                  <Download size={13} style={{ marginRight:6 }}/> JSON
+                </motion.button>
+              </div>
+            </motion.div>
+
             <AnimatePresence mode="wait">
-              {view==="dashboard"    && <DashboardView    key="dashboard"    stats={stats} monthlyData={monthlyData} catData={catData}/>}
-              {view==="transactions" && <TransactionsView key="transactions" txs={filteredTxs} allTxs={txs} search={search} setSearch={setSearch} filterCat={filterCat} setFilterCat={setFilterCat} filterType={filterType} setFilterType={setFilterType} sortField={sortField} sortDir={sortDir} handleSort={handleSort} role={role} onEdit={(tx)=>setModal({mode:"edit",tx:{...tx}})} onDelete={handleDelete} onAdd={openAdd}/>}
-              {view==="insights"     && <InsightsView     key="insights"     monthlyData={monthlyData} catData={catData}/>}
+              {view==="dashboard"    && <DashboardView    key="dashboard"    stats={stats} monthlyData={monthlyData} catData={catData} isLoading={isLoading}/>}
+              {view==="transactions" && <TransactionsView key="transactions" txs={filteredTxsForList} allTxs={txs} search={search} setSearch={setSearch} filterCat={filterCat} setFilterCat={setFilterCat} filterType={filterType} setFilterType={setFilterType} sortField={sortField} sortDir={sortDir} handleSort={handleSort} role={role} onEdit={(tx)=>setModal({mode:"edit",tx:{...tx}})} onDelete={handleDelete} onAdd={openAdd} isLoading={isLoading}/>}
+              {view==="insights"     && <InsightsView     key="insights"     monthlyData={monthlyData} catData={catData} isLoading={isLoading}/>}
             </AnimatePresence>
           </div>
         </main>
