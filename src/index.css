@@ -6,7 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   HEIST CONTROL SYSTEM — Global Styles
+   FUNDLY FINANCE DASHBOARD — Global Styles
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 *, *::before, *::after {
@@ -34,15 +34,15 @@ body.theme-light .skeleton {
 }
 
 :root {
-  --heist-black: #050505;
-  --heist-surface: #0f172a;
-  --heist-card: rgba(255, 255, 255, 0.04);
-  --heist-border: rgba(255, 255, 255, 0.08);
-  --heist-blue: #3b82f6;
-  --heist-gold: #d4af37;
-  --heist-text: #e5e7eb;
-  --heist-muted: #9ca3af;
-  --heist-dim: #374151;
+  --fundly-black: #050505;
+  --fundly-surface: #0f172a;
+  --fundly-card: rgba(255, 255, 255, 0.04);
+  --fundly-border: rgba(255, 255, 255, 0.08);
+  --fundly-blue: #3b82f6;
+  --fundly-gold: #d4af37;
+  --fundly-text: #e5e7eb;
+  --fundly-muted: #9ca3af;
+  --fundly-dim: #374151;
 
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-synthesis: none;
@@ -91,8 +91,8 @@ html {
 body {
   margin: 0;
   padding: 0;
-  background: var(--heist-black);
-  color: var(--heist-text);
+  background: var(--fundly-black);
+  color: var(--fundly-text);
   overflow-x: hidden;
 }
 
@@ -114,17 +114,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--heist-black);
+  background: var(--fundly-black);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--heist-border);
+  background: var(--fundly-border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--heist-red);
-  box-shadow: 0 0 6px var(--heist-glow);
+  background: var(--fundly-red);
+  box-shadow: 0 0 6px var(--fundly-glow);
 }
 
 /* Selection */
@@ -134,12 +134,12 @@ body {
 }
 
 /* Keyframes */
-@keyframes heistPulse {
+@keyframes fundlyPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
 
-@keyframes heistGlow {
+@keyframes fundlyGlow {
   0%, 100% { box-shadow: 0 0 5px rgba(229, 9, 20, 0.3); }
   50% { box-shadow: 0 0 20px rgba(229, 9, 20, 0.6), 0 0 40px rgba(229, 9, 20, 0.2); }
 }
@@ -177,7 +177,7 @@ body {
 }
 
 @keyframes blink {
-  0%, 100% { border-color: var(--heist-red); }
+  0%, 100% { border-color: var(--fundly-red); }
   50% { border-color: transparent; }
 }
 
@@ -187,7 +187,7 @@ body {
 }
 
 /* Utility: animate on mount */
-.heist-fade-in {
+.fundly-fade-in {
   animation: fadeInUp 0.4s ease-out both;
 }
 
