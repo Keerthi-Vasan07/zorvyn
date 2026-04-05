@@ -983,6 +983,21 @@ export default function App() {
               {view==="transactions" && <TransactionsView key="transactions" txs={filteredTxsForList} allTxs={txs} search={search} setSearch={setSearch} filterCat={filterCat} setFilterCat={setFilterCat} filterType={filterType} setFilterType={setFilterType} sortField={sortField} sortDir={sortDir} handleSort={handleSort} role={role} onEdit={(tx)=>setModal({mode:"edit",tx:{...tx}})} onDelete={handleDelete} onAdd={openAdd} isLoading={isLoading}/>}
               {view==="insights"     && <InsightsView     key="insights"     monthlyData={monthlyData} catData={catData} isLoading={isLoading}/>}
             </AnimatePresence>
+
+            {/* ── Footer ── */}
+            <footer style={{ marginTop: 40, padding: "20px 0", textAlign: "center", borderTop: `1px solid ${T.border}`, opacity: 0.6 }}>
+              <p style={{ fontSize: 13, margin: 0, fontWeight: 500 }}>
+                made with luv by{" "}
+                <a 
+                  href="https://www.linkedin.com/in/keerthi-vasan-8a2878326" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ color: T.blue, textDecoration: "none", transition: "opacity 0.2s" }}
+                >
+                  Keerthi Vasan
+                </a>
+              </p>
+            </footer>
           </div>
         </main>
 

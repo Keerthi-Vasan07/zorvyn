@@ -119,7 +119,7 @@ Distributed under the **MIT License**. See `LICENSE` for more information.
 ## 👨‍💻 Developed By
 
 **Keerthi Vasan**  
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/keerthi-vasan-dummy)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](https://www.linkedin.com/in/keerthi-vasan-8a2878326)
 
 ---
 
